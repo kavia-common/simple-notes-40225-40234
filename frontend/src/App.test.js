@@ -130,3 +130,51 @@ test('create two notes then immediately delete the latest from editor selects pr
   const editorTitle = await screen.findByLabelText('Note title');
   expect(editorTitle.value).toBe('A');
 });
+
+test('deleting from list while filtered removes item and updates list', async () => {
+  window.localStorage.clear();
+  render(<App />);
+
+  // Create three notes
+  const getNewBtn = () => screen.getAllByRole('button', { name: /New Note/i })[0];
+
+  fireEvent.click(getNewBtn());
+  let title = await screen.findByLabelText('Note title');
+  fireEvent.change(title, { target: { value: 'Alpha' } });
+  fireEvent.click(screen.getByRole('button', { name: /Save note/i }));
+
+  fireEvent.click(getNewBtn());
+  title = await screen.findByLabelText('Note title');
+  fireEvent.change(title, { target: { value: 'Beta' } });
+  fireEvent.click(screen.getByRole('button', { name: /Save note/i }));
+
+  fireEvent.click(getNewBtn());
+  title = await screen.findByLabelText('Note title');
+  fireEvent.change(title, { target: { value: 'Gamma' } });
+  fireEvent.click(screen.getByRole('button', { name: /Save note/i }));
+
+  // Filter for 'Beta'
+  const searchInput = screen.getByLabelText('Search notes');
+  fireEvent.change(searchInput, { target: { value: 'Beta' } });
+
+  // Ensure only Beta appears
+  const list = await screen.findByRole('list', { name: /Notes/i });
+  expect(within(list).getAllByRole('button', { name: /Delete/ }).length).toBe(1);
+  expect(within(list).getByText('Beta')).toBeInTheDocument();
+
+  // Delete the filtered item
+  const originalConfirm = window.confirm;
+  window.confirm = () => true;
+  fireEvent.click(within(list).getByRole('button', { name: /Delete/ }));
+  window.confirm = originalConfirm;
+
+  // The filtered list should now show "No notes found" since 'Beta' was removed
+  expect(await screen.findByText(/No notes found/i)).toBeInTheDocument();
+
+  // Clear search, ensure only two notes remain (Alpha and Gamma)
+  fireEvent.change(searchInput, { target: { value: '' } });
+  const fullList = await screen.findByRole('list', { name: /Notes/i });
+  const titles = within(fullList).getAllByRole('heading', { level: 3 }).map(h => h.textContent);
+  expect(titles).toEqual(expect.arrayContaining(['Alpha', 'Gamma']));
+  expect(titles).not.toEqual(expect.arrayContaining(['Beta']));
+});

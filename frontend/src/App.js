@@ -89,13 +89,12 @@ function App() {
 
   // PUBLIC_INTERFACE
   const handleDeleteNote = useCallback(
-    (id) => {
-      // Read the current title for confirmation prompt using the latest 'notes' value.
-      const note = notes.find((n) => n.id === id);
-      const title = note?.title ? `"${note.title}"` : 'this note';
+    (id, titleForConfirm) => {
+      // Prefer provided title to avoid reading from potentially stale closures
+      const label = titleForConfirm ? `"${titleForConfirm}"` : 'this note';
       // Confirm deletion
       // eslint-disable-next-line no-alert
-      const confirmed = window.confirm(`Delete ${title}? This cannot be undone.`);
+      const confirmed = window.confirm(`Delete ${label}? This cannot be undone.`);
       if (!confirmed) return;
 
       // Compute remaining notes and next selection atomically based on the latest state
@@ -123,7 +122,7 @@ function App() {
         return remaining;
       });
     },
-    [notes, setNotes, setSelectedNoteId]
+    [setNotes, setSelectedNoteId]
   );
 
   // Persist notes to storage explicitly if needed (useLocalStorage handles it, but keep for clarity)
@@ -179,7 +178,7 @@ function App() {
               key={selectedNote.id}
               note={selectedNote}
               onChange={(updates) => handleUpdateNote(selectedNote.id, updates)}
-              onDelete={() => handleDeleteNote(selectedNote.id)}
+              onDelete={() => handleDeleteNote(selectedNote.id, selectedNote.title)}
             />
           ) : (
             <EmptyState onCreate={handleCreateNote} />

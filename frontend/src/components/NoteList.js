@@ -24,7 +24,7 @@ function NoteList({ notes, selectedId, onSelect, onDelete }) {
           note={n}
           selected={n.id === selectedId}
           onClick={() => onSelect(n.id)}
-          onDelete={() => onDelete(n.id)}
+          onDelete={() => onDelete(n.id, n.title)}
         />
       ))}
     </ul>
