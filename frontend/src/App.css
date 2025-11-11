@@ -1,104 +1,288 @@
-/* CSS Variables for Theme Management */
+/* Ocean Professional Theme Variables */
 :root {
-  /* Light theme colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #282c34;
-  --text-secondary: #61dafb;
-  --border-color: #e9ecef;
-  --button-bg: #007bff;
-  --button-text: #ffffff;
+  --color-primary: #2563EB;   /* blue */
+  --color-secondary: #F59E0B; /* amber */
+  --color-success: #F59E0B;   /* using amber as success accent */
+  --color-error: #EF4444;     /* red */
+  --bg: #f9fafb;              /* background */
+  --surface: #ffffff;         /* cards/surfaces */
+  --text: #111827;            /* primary text */
+  --muted: #6b7280;           /* secondary text */
+  --border: #e5e7eb;          /* subtle borders */
+  --shadow: 0 10px 25px rgba(0,0,0,0.05);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --focus: 0 0 0 3px rgba(37, 99, 235, 0.35);
 }
 
 [data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #282c34;
-  --text-primary: #ffffff;
-  --text-secondary: #61dafb;
-  --border-color: #404040;
-  --button-bg: #0056b3;
-  --button-text: #ffffff;
+  --bg: #0f172a;
+  --surface: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #1f2937;
+  --shadow: 0 10px 25px rgba(0,0,0,0.35);
 }
 
-.App {
-  text-align: center;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+/* Base Structure */
+.app-root {
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background: var(--bg);
+  color: var(--text);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Header */
+.header {
+  background: linear-gradient(180deg, rgba(37,99,235,0.08), rgba(249,250,251,0));
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
-.App-header {
-  background-color: var(--bg-secondary);
-  min-height: 100vh;
+.brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.15);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+.sidebar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease;
-  position: relative;
+  min-height: calc(100vh - 120px);
 }
 
-.App-link {
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+.sidebar-toolbar {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
 }
 
-.theme-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: var(--button-bg);
-  color: var(--button-text);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
+.editor-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-height: calc(100vh - 120px);
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Buttons */
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.08s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.theme-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0.9;
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 14px rgba(0,0,0,0.06);
 }
 
-.theme-toggle:active {
-  transform: translateY(0);
+.btn:focus {
+  outline: none;
+  box-shadow: var(--focus);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.btn-primary {
+  background: var(--color-primary);
+  border-color: transparent;
+  color: white;
+}
+
+.btn-new {
+  white-space: nowrap;
+}
+
+/* Inputs */
+.search-input,
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.input:focus,
+.textarea:focus,
+.search-input:focus {
+  outline: none;
+  box-shadow: var(--focus);
+  border-color: var(--color-primary);
+}
+
+/* Note List */
+.note-list {
+  overflow: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: var(--surface);
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.06s ease;
+  cursor: pointer;
+}
+
+.note-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.5);
+}
+
+.note-item.selected {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus);
+}
+
+.note-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin: 0 0 6px 0;
+}
+
+.note-preview {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+}
+
+.note-meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.note-actions {
+  display: flex;
+  gap: 6px;
+  align-items: start;
+}
+
+.btn-danger {
+  background: var(--color-error);
+  border-color: transparent;
+  color: white;
+}
+
+/* Editor */
+.editor-header {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(37,99,235,0.05), rgba(249,250,251,0));
+}
+
+.editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  height: calc(100% - 60px);
+}
+
+.title-input {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.textarea {
+  flex: 1;
+  min-height: 320px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Empty state */
+.empty-state {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+}
+
+.empty-title {
+  font-weight: 800;
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.empty-actions {
+  margin-top: 16px;
+}
+
+/* Utilities */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
   }
-  to {
-    transform: rotate(360deg);
+  .sidebar {
+    min-height: auto;
   }
-}
-
-/* Responsive design for mobile */
-@media (max-width: 768px) {
-  .theme-toggle {
-    top: 10px;
-    right: 10px;
-    padding: 8px 16px;
-    font-size: 12px;
+  .editor-pane {
+    min-height: 50vh;
   }
 }

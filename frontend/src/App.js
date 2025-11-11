@@ -1,47 +1,171 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './App.css';
+import './index.css';
+import Header from './components/Header';
+import NoteList from './components/NoteList';
+import NoteEditor from './components/NoteEditor';
+import EmptyState from './components/EmptyState';
+import { storage } from './utils/storage';
+import { createUUID } from './utils/uuid';
+import useLocalStorage from './hooks/useLocalStorage';
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * App is the root component for the Simple Notes application.
+ * It manages notes state, selection, search, and orchestrates the layout.
+ */
 function App() {
-  const [theme, setTheme] = useState('light');
+  // Theme persisted for user preference
+  const [theme, setTheme] = useLocalStorage('theme', 'light');
 
-  // Effect to apply theme to document element
+  // Notes and selected note are persisted to localStorage
+  const [notes, setNotes] = useLocalStorage('notes', []);
+  const [selectedNoteId, setSelectedNoteId] = useLocalStorage('selectedNoteId', null);
+  const [search, setSearch] = useState('');
+
+  // Apply theme to document element for CSS vars
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  const onToggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  }, [setTheme]);
+
+  // Derived: selected note
+  const selectedNote = useMemo(
+    () => notes.find((n) => n.id === selectedNoteId) || null,
+    [notes, selectedNoteId]
+  );
+
+  // Derived: filtered and sorted notes by most recently updated
+  const filteredNotes = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q
+      ? notes.filter(
+          (n) =>
+            (n.title || '').toLowerCase().includes(q) ||
+            (n.body || '').toLowerCase().includes(q)
+        )
+      : notes.slice();
+    filtered.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    return filtered;
+  }, [notes, search]);
+
   // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  const handleCreateNote = useCallback(() => {
+    const now = Date.now();
+    const newNote = {
+      id: createUUID(),
+      title: 'Untitled',
+      body: '',
+      createdAt: now,
+      updatedAt: now,
+    };
+    const next = [newNote, ...notes];
+    setNotes(next);
+    setSelectedNoteId(newNote.id);
+  }, [notes, setNotes, setSelectedNoteId]);
+
+  // PUBLIC_INTERFACE
+  const handleSelectNote = useCallback(
+    (id) => {
+      setSelectedNoteId(id);
+    },
+    [setSelectedNoteId]
+  );
+
+  // PUBLIC_INTERFACE
+  const handleUpdateNote = useCallback(
+    (id, updates) => {
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, ...updates, updatedAt: Date.now() } : n
+        )
+      );
+    },
+    [setNotes]
+  );
+
+  // PUBLIC_INTERFACE
+  const handleDeleteNote = useCallback(
+    (id) => {
+      const note = notes.find((n) => n.id === id);
+      const title = note?.title ? `"${note.title}"` : 'this note';
+      // Confirm deletion
+      // eslint-disable-next-line no-alert
+      const confirmed = window.confirm(`Delete ${title}? This cannot be undone.`);
+      if (!confirmed) return;
+
+      const remaining = notes.filter((n) => n.id !== id);
+      setNotes(remaining);
+      if (selectedNoteId === id) {
+        setSelectedNoteId(remaining.length ? remaining[0].id : null);
+      }
+    },
+    [notes, selectedNoteId, setNotes, setSelectedNoteId]
+  );
+
+  // Persist notes to storage explicitly if needed (useLocalStorage handles it, but keep for clarity)
+  useEffect(() => {
+    storage.set('notes', notes);
+  }, [notes]);
+
+  useEffect(() => {
+    storage.set('selectedNoteId', selectedNoteId);
+  }, [selectedNoteId]);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+    <div className="app-root">
+      <Header
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        onCreateNote={handleCreateNote}
+      />
+
+      <main className="layout" aria-label="Notes application main layout">
+        <aside className="sidebar" aria-label="Notes list panel">
+          <div className="sidebar-toolbar">
+            <input
+              aria-label="Search notes"
+              className="search-input"
+              placeholder="Search notes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button
+              className="btn btn-primary btn-new"
+              onClick={handleCreateNote}
+              aria-label="Create new note"
+            >
+              + New Note
+            </button>
+          </div>
+          <NoteList
+            notes={filteredNotes}
+            selectedId={selectedNoteId}
+            onSelect={handleSelectNote}
+            onDelete={handleDeleteNote}
+          />
+        </aside>
+
+        <section
+          className="editor-pane"
+          aria-label="Note editor panel"
+          role="region"
         >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+          {selectedNote ? (
+            <NoteEditor
+              key={selectedNote.id}
+              note={selectedNote}
+              onChange={(updates) => handleUpdateNote(selectedNote.id, updates)}
+              onDelete={() => handleDeleteNote(selectedNote.id)}
+            />
+          ) : (
+            <EmptyState onCreate={handleCreateNote} />
+          )}
+        </section>
+      </main>
     </div>
   );
 }
