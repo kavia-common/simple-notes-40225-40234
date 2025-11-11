@@ -74,3 +74,59 @@ test('deleting from list selects next most recent note', async () => {
   const editorTitle = await screen.findByLabelText('Note title');
   expect(editorTitle.value).toBe('First');
 });
+
+test('create then immediately delete from editor works and clears when only note', async () => {
+  window.localStorage.clear();
+  render(<App />);
+
+  // Create a note from sidebar/header
+  const newBtns = screen.getAllByRole('button', { name: /New Note/i });
+  fireEvent.click(newBtns[0]);
+
+  // Immediately delete from editor without manual save
+  const deleteBtn = await screen.findByRole('button', { name: /Delete note/i });
+  const originalConfirm = window.confirm;
+  window.confirm = () => true;
+  fireEvent.click(deleteBtn);
+  window.confirm = originalConfirm;
+
+  // Should return to empty state because no notes remain
+  expect(await screen.findByText(/Simple Notes/i)).toBeInTheDocument();
+
+  // localStorage should reflect no notes and no selection
+  const notesRaw = window.localStorage.getItem('notes');
+  const selectedIdRaw = window.localStorage.getItem('selectedNoteId');
+  expect(notesRaw).toBe('[]');
+  expect(selectedIdRaw).toBe('null');
+});
+
+test('create two notes then immediately delete the latest from editor selects previous', async () => {
+  window.localStorage.clear();
+  render(<App />);
+
+  // First note
+  let newBtn = screen.getAllByRole('button', { name: /New Note/i })[0];
+  fireEvent.click(newBtn);
+  const title1 = await screen.findByLabelText('Note title');
+  fireEvent.change(title1, { target: { value: 'A' } });
+  // Save
+  fireEvent.click(screen.getByRole('button', { name: /Save note/i }));
+  await act(async () => { await flushPromises(); });
+
+  // Second note (most recent)
+  newBtn = screen.getAllByRole('button', { name: /New Note/i })[0];
+  fireEvent.click(newBtn);
+  const title2 = await screen.findByLabelText('Note title');
+  fireEvent.change(title2, { target: { value: 'B' } });
+
+  // Immediately delete from editor
+  const deleteBtn = screen.getByRole('button', { name: /Delete note/i });
+  const originalConfirm = window.confirm;
+  window.confirm = () => true;
+  fireEvent.click(deleteBtn);
+  window.confirm = originalConfirm;
+
+  // Should select previous note "A"
+  const editorTitle = await screen.findByLabelText('Note title');
+  expect(editorTitle.value).toBe('A');
+});

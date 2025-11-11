@@ -90,6 +90,7 @@ function App() {
   // PUBLIC_INTERFACE
   const handleDeleteNote = useCallback(
     (id) => {
+      // Read the current title for confirmation prompt using the latest 'notes' value.
       const note = notes.find((n) => n.id === id);
       const title = note?.title ? `"${note.title}"` : 'this note';
       // Confirm deletion
@@ -97,32 +98,32 @@ function App() {
       const confirmed = window.confirm(`Delete ${title}? This cannot be undone.`);
       if (!confirmed) return;
 
-      // Remove the note
-      const remaining = notes.filter((n) => n.id !== id);
+      // Compute remaining notes and next selection atomically based on the latest state
+      setNotes((prev) => {
+        const remaining = prev.filter((n) => n.id !== id);
 
-      // Determine next selection from remaining notes by most recent updatedAt (desc)
-      let nextSelectedId = null;
-      if (remaining.length) {
-        const sorted = remaining
-          .slice()
-          .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-        nextSelectedId = sorted[0]?.id || null;
-      }
-
-      setNotes(remaining);
-
-      // Only adjust selected note if the deleted one was selected
-      if (selectedNoteId === id) {
-        setSelectedNoteId(nextSelectedId);
-      } else {
-        // Keep current selection if it still exists; if not, ensure it's valid
-        const stillExists = remaining.some((n) => n.id === selectedNoteId);
-        if (!stillExists) {
-          setSelectedNoteId(nextSelectedId);
+        // Determine next selection from remaining notes by most recent updatedAt (desc)
+        let nextSelectedId = null;
+        if (remaining.length) {
+          const sorted = remaining
+            .slice()
+            .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+          nextSelectedId = sorted[0]?.id || null;
         }
-      }
+
+        // Update selected note based on whether the deleted one was selected and remaining validity.
+        setSelectedNoteId((currSelected) => {
+          if (currSelected === id) {
+            return nextSelectedId;
+          }
+          const stillExists = remaining.some((n) => n.id === currSelected);
+          return stillExists ? currSelected : nextSelectedId;
+        });
+
+        return remaining;
+      });
     },
-    [notes, selectedNoteId, setNotes, setSelectedNoteId]
+    [notes, setNotes, setSelectedNoteId]
   );
 
   // Persist notes to storage explicitly if needed (useLocalStorage handles it, but keep for clarity)
