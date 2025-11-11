@@ -97,10 +97,29 @@ function App() {
       const confirmed = window.confirm(`Delete ${title}? This cannot be undone.`);
       if (!confirmed) return;
 
+      // Remove the note
       const remaining = notes.filter((n) => n.id !== id);
+
+      // Determine next selection from remaining notes by most recent updatedAt (desc)
+      let nextSelectedId = null;
+      if (remaining.length) {
+        const sorted = remaining
+          .slice()
+          .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        nextSelectedId = sorted[0]?.id || null;
+      }
+
       setNotes(remaining);
+
+      // Only adjust selected note if the deleted one was selected
       if (selectedNoteId === id) {
-        setSelectedNoteId(remaining.length ? remaining[0].id : null);
+        setSelectedNoteId(nextSelectedId);
+      } else {
+        // Keep current selection if it still exists; if not, ensure it's valid
+        const stillExists = remaining.some((n) => n.id === selectedNoteId);
+        if (!stillExists) {
+          setSelectedNoteId(nextSelectedId);
+        }
       }
     },
     [notes, selectedNoteId, setNotes, setSelectedNoteId]
